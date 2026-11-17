@@ -69,22 +69,24 @@ export const SellerProductEditorPage: React.FC = () => {
         if (id) {
           setIsLoadingProduct(true);
           const p = await productService.getProduct(id);
-          setName(p.name);
-          setBrand(p.brand);
-          setCategory(typeof p.category === 'object' ? p.category._id : p.category);
-          setDescription(p.description);
-          setShortDescription(p.shortDescription || '');
-          setPrice(p.price);
-          setDiscountPrice(p.discountPrice || '');
-          setStock(p.stock);
-          setLowStockThreshold(p.lowStockThreshold || 3);
-          setSku(p.sku || '');
-          setStatus(p.status === 'active' ? 'active' : 'draft');
-          setImages(p.images || []);
-          if (p.specifications) {
-            setSpecs(
-              Object.entries(p.specifications).map(([k, v]) => ({ key: k, value: String(v) })),
-            );
+          if (p) {
+            setName(p.name);
+            setBrand(p.brand);
+            setCategory(typeof p.category === 'object' ? p.category._id : p.category);
+            setDescription(p.description);
+            setShortDescription(p.shortDescription || '');
+            setPrice(p.price);
+            setDiscountPrice(p.discountPrice || '');
+            setStock(p.stock);
+            setLowStockThreshold(p.lowStockThreshold || 3);
+            setSku(p.sku || '');
+            setStatus(p.status === 'active' ? 'active' : 'draft');
+            setImages(p.images || []);
+            if (p.specifications) {
+              setSpecs(
+                Object.entries(p.specifications).map(([k, v]) => ({ key: k, value: String(v) })),
+              );
+            }
           }
         }
       } catch {

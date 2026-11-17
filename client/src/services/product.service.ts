@@ -25,28 +25,54 @@ export interface ProductFacets {
 
 export const productService = {
   async listProducts(params: ProductQueryParams = {}) {
-    const res = await api.get<ApiResponse<Product[]> & { meta: PaginationMeta }>('/products', {
-      params,
-    });
-    return {
-      products: Array.isArray(res.data.data) ? res.data.data : [],
-      meta: res.data.meta!,
-    };
+    try {
+      const res = await api.get<ApiResponse<Product[]> & { meta: PaginationMeta }>('/products', {
+        params,
+      });
+      const data = res.data;
+      const products = Array.isArray(data?.data) ? data.data : [];
+      const meta = data?.meta ?? {
+        total: products.length,
+        page: 1,
+        limit: 12,
+        pages: 1,
+        hasNext: false,
+        hasPrev: false,
+      };
+      return { products, meta };
+    } catch {
+      return {
+        products: [],
+        meta: { total: 0, page: 1, limit: 12, pages: 0, hasNext: false, hasPrev: false },
+      };
+    }
   },
 
   async getProduct(slug: string) {
-    const res = await api.get<ApiResponse<{ product: Product; reviews?: any[] }>>(`/products/${slug}`);
-    return res.data.data?.product ?? (res.data.data as any);
+    try {
+      const res = await api.get<ApiResponse<{ product: Product; reviews?: any[] }>>(`/products/${slug}`);
+      return res.data?.data?.product ?? (res.data?.data as any);
+    } catch {
+      return null;
+    }
   },
 
   async getRelated(slug: string) {
-    const res = await api.get<ApiResponse<Product[]>>(`/products/${slug}/related`);
-    return Array.isArray(res.data.data) ? res.data.data : [];
+    try {
+      const res = await api.get<ApiResponse<Product[]>>(`/products/${slug}/related`);
+      return Array.isArray(res.data?.data) ? res.data.data : [];
+    } catch {
+      return [];
+    }
   },
 
   async getFacets(params: { category?: string } = {}) {
-    const res = await api.get<ApiResponse<ProductFacets>>('/products/facets', { params });
-    return res.data.data;
+    try {
+      const res = await api.get<ApiResponse<ProductFacets>>('/products/facets', { params });
+      return res.data?.data ?? { categories: [], brands: [], priceRange: { min: 0, max: 0 } };
+    } catch {
+      return { categories: [], brands: [], priceRange: { min: 0, max: 0 } };
+    }
   },
 
   async reportProduct(id: string, reason: string) {

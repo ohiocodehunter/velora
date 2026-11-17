@@ -3,10 +3,14 @@ import type { ApiResponse, Banner, NotificationItem } from '@/types';
 
 export const miscService = {
   async getBanners(position?: string) {
-    const res = await api.get<ApiResponse<Banner[]>>('/banners', {
-      params: position ? { position } : undefined,
-    });
-    return res.data.data;
+    try {
+      const res = await api.get<ApiResponse<Banner[]>>('/banners', {
+        params: position ? { position } : undefined,
+      });
+      return Array.isArray(res.data?.data) ? res.data.data : [];
+    } catch {
+      return [];
+    }
   },
 
   async subscribeNewsletter(email: string) {
@@ -20,8 +24,12 @@ export const miscService = {
   },
 
   async getNotifications() {
-    const res = await api.get<ApiResponse<NotificationItem[]>>('/notifications');
-    return res.data.data;
+    try {
+      const res = await api.get<ApiResponse<NotificationItem[]>>('/notifications');
+      return Array.isArray(res.data?.data) ? res.data.data : [];
+    } catch {
+      return [];
+    }
   },
 
   async markAllNotificationsRead() {

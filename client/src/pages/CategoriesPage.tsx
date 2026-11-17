@@ -44,7 +44,7 @@ export const CategoriesPage: React.FC = () => {
             <Skeleton key={i} className="aspect-4/5 rounded-2xl" />
           ))}
         </div>
-      ) : categories.length === 0 ? (
+      ) : !Array.isArray(categories) || categories.length === 0 ? (
         <EmptyState title="No categories found" description="Categories are currently being curated." />
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

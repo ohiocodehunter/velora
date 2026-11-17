@@ -245,7 +245,7 @@ export const ShopPage: React.FC = () => {
                 >
                   All Categories
                 </button>
-                {categories.map((c) => (
+                {Array.isArray(categories) && categories.map((c) => (
                   <button
                     key={c._id}
                     onClick={() => updateFilter('category', c.slug)}
@@ -409,7 +409,7 @@ export const ShopPage: React.FC = () => {
                 >
                   All Categories
                 </button>
-                {categories.map((c) => (
+                {Array.isArray(categories) && categories.map((c) => (
                   <button
                     key={c._id}
                     onClick={() => {

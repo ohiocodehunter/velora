@@ -7,13 +7,162 @@ import type { Product, Category, Banner } from '@/types';
 import ProductCard from '@/components/common/ProductCard';
 import CategoryCard from '@/components/common/CategoryCard';
 import Skeleton from '@/components/ui/Skeleton';
-import { ArrowRight, Sparkles, ShieldCheck, Award, Star, Store, Quote } from 'lucide-react';
+import { ArrowRight, Sparkles, ShieldCheck, Award, Star } from 'lucide-react';
 import Button from '@/components/ui/Button';
+
+const DEFAULT_CATEGORIES: Category[] = [
+  {
+    _id: 'cat-watches',
+    name: 'Horology & Timepieces',
+    slug: 'watches',
+    description: 'Hand-finished automatic movements & artisan dials',
+    image: { url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80', publicId: '' },
+    isActive: true,
+    isFeatured: true,
+    sortOrder: 1,
+    productCount: 12,
+  },
+  {
+    _id: 'cat-audio',
+    name: 'Hi-Fi Audio Gear',
+    slug: 'audio',
+    description: 'Audiophile grade acoustic transducers & tube amps',
+    image: { url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80', publicId: '' },
+    isActive: true,
+    isFeatured: true,
+    sortOrder: 2,
+    productCount: 10,
+  },
+  {
+    _id: 'cat-leather',
+    name: 'Artisanal Leather',
+    slug: 'leather-goods',
+    description: 'Full-grain vegetable tanned bespoke goods',
+    image: { url: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&auto=format&fit=crop&q=80', publicId: '' },
+    isActive: true,
+    isFeatured: true,
+    sortOrder: 3,
+    productCount: 8,
+  },
+  {
+    _id: 'cat-furnishings',
+    name: 'Bespoke Furnishings',
+    slug: 'home-decor',
+    description: 'Solid teakwood & architectural brass accents',
+    image: { url: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600&auto=format&fit=crop&q=80', publicId: '' },
+    isActive: true,
+    isFeatured: true,
+    sortOrder: 4,
+    productCount: 9,
+  },
+];
+
+const FALLBACK_PRODUCTS: Product[] = [
+  {
+    _id: 'p-1',
+    name: 'Aurelius Heritage Chronograph',
+    slug: 'aurelius-heritage-chronograph',
+    description: 'Hand-assembled mechanical chronograph with sapphire glass and surgical grade stainless casing.',
+    images: [{ url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80', publicId: '', alt: 'Chronograph' }],
+    price: 49999,
+    discountPrice: 42999,
+    finalPrice: 42999,
+    category: { _id: 'cat-watches', name: 'Horology', slug: 'watches' } as any,
+    brand: 'Aurel',
+    seller: 'seller-1' as any,
+    store: { name: 'Atelier Aurelius', slug: 'atelier-aurelius' } as any,
+    stock: 8,
+    sku: 'AUR-001',
+    tags: ['horology', 'watch', 'automatic'],
+    variants: [],
+    specifications: { Movement: 'Automatic Calibre 18', Case: '316L Stainless Steel' },
+    ratingAverage: 4.9,
+    ratingCount: 38,
+    isFeatured: true,
+    status: 'active',
+    soldCount: 42,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    _id: 'p-2',
+    name: 'Acoustic Reference 7 Headphones',
+    slug: 'acoustic-reference-7-headphones',
+    description: 'Planar magnetic open-back audiophile studio reference headphones with lambskin earcups.',
+    images: [{ url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80', publicId: '', alt: 'Headphones' }],
+    price: 34999,
+    discountPrice: 29999,
+    finalPrice: 29999,
+    category: { _id: 'cat-audio', name: 'Hi-Fi Audio', slug: 'audio' } as any,
+    brand: 'Pulse',
+    seller: 'seller-2' as any,
+    store: { name: 'Pulse Acoustics', slug: 'pulse-acoustics' } as any,
+    stock: 12,
+    sku: 'PLS-007',
+    tags: ['audio', 'headphones'],
+    variants: [],
+    specifications: { Driver: '50mm Planar Magnetic', Impedance: '32 Ohms' },
+    ratingAverage: 4.8,
+    ratingCount: 29,
+    isFeatured: true,
+    status: 'active',
+    soldCount: 55,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    _id: 'p-3',
+    name: 'Heritage Vachetta Weekender',
+    slug: 'heritage-vachetta-weekender',
+    description: 'Hand-stitched vegetable-tanned Italian leather duffel bag with reinforced brass feet.',
+    images: [{ url: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&auto=format&fit=crop&q=80', publicId: '', alt: 'Leather bag' }],
+    price: 24999,
+    discountPrice: 19999,
+    finalPrice: 19999,
+    category: { _id: 'cat-leather', name: 'Leather Goods', slug: 'leather-goods' } as any,
+    brand: 'Atelier',
+    seller: 'seller-3' as any,
+    store: { name: 'The Leather Atelier', slug: 'the-leather-atelier' } as any,
+    stock: 6,
+    sku: 'ATL-003',
+    tags: ['leather', 'bag'],
+    variants: [],
+    specifications: { Material: 'Full Grain Leather', Hardware: 'Solid Antique Brass' },
+    ratingAverage: 5.0,
+    ratingCount: 19,
+    isFeatured: true,
+    status: 'active',
+    soldCount: 31,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    _id: 'p-4',
+    name: 'Solid Brass Architectural Desk Lamp',
+    slug: 'solid-brass-architectural-desk-lamp',
+    description: 'Cast brass articulating task luminaire with warm temperature museum-grade LED emitter.',
+    images: [{ url: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800&auto=format&fit=crop&q=80', publicId: '', alt: 'Lamp' }],
+    price: 18999,
+    discountPrice: 14999,
+    finalPrice: 14999,
+    category: { _id: 'cat-furnishings', name: 'Home & Objects', slug: 'home-decor' } as any,
+    brand: 'Lumen',
+    seller: 'seller-4' as any,
+    store: { name: 'Lumen Studio', slug: 'lumen-studio' } as any,
+    stock: 15,
+    sku: 'LUM-004',
+    tags: ['lighting', 'brass'],
+    variants: [],
+    specifications: { Material: 'Machined Brass', Power: '12W Warm White 2700K' },
+    ratingAverage: 4.7,
+    ratingCount: 22,
+    isFeatured: true,
+    status: 'active',
+    soldCount: 28,
+    createdAt: new Date().toISOString(),
+  },
+];
 
 export const HomePage: React.FC = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
-  const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroBanners, setHeroBanners] = useState<Banner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,19 +171,25 @@ export const HomePage: React.FC = () => {
     async function loadHomeData() {
       try {
         setIsLoading(true);
-        const [featuredRes, newRes, bestRes, catRes, bannersRes] = await Promise.allSettled([
+        const [featuredRes, newRes, catRes, bannersRes] = await Promise.allSettled([
           productService.listProducts({ featured: true, limit: 8 }),
           productService.listProducts({ sort: '-createdAt', limit: 8 }),
-          productService.listProducts({ sort: '-soldCount', limit: 8 }),
           categoryService.getCategories({ featured: true }),
           miscService.getBanners('home_hero'),
         ]);
 
-        if (featuredRes.status === 'fulfilled') setFeaturedProducts(featuredRes.value.products);
-        if (newRes.status === 'fulfilled') setNewArrivals(newRes.value.products);
-        if (bestRes.status === 'fulfilled') setBestSellers(bestRes.value.products);
-        if (catRes.status === 'fulfilled') setCategories(catRes.value);
-        if (bannersRes.status === 'fulfilled') setHeroBanners(bannersRes.value);
+        if (featuredRes.status === 'fulfilled' && Array.isArray(featuredRes.value?.products)) {
+          setFeaturedProducts(featuredRes.value.products);
+        }
+        if (newRes.status === 'fulfilled' && Array.isArray(newRes.value?.products)) {
+          setNewArrivals(newRes.value.products);
+        }
+        if (catRes.status === 'fulfilled' && Array.isArray(catRes.value)) {
+          setCategories(catRes.value);
+        }
+        if (bannersRes.status === 'fulfilled' && Array.isArray(bannersRes.value)) {
+          setHeroBanners(bannersRes.value);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -42,7 +197,10 @@ export const HomePage: React.FC = () => {
     loadHomeData();
   }, []);
 
-  const heroBanner = heroBanners[0];
+  const heroBanner = Array.isArray(heroBanners) && heroBanners.length > 0 ? heroBanners[0] : null;
+  const displayCategories = categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+  const displayFeatured = featuredProducts.length > 0 ? featuredProducts : FALLBACK_PRODUCTS;
+  const displayNewArrivals = newArrivals.length > 0 ? newArrivals : FALLBACK_PRODUCTS;
 
   const testimonials = [
     {
@@ -175,7 +333,7 @@ export const HomePage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-            {categories.slice(0, 4).map((category) => (
+            {displayCategories.slice(0, 4).map((category) => (
               <CategoryCard key={category._id} category={category} />
             ))}
           </div>
@@ -205,7 +363,7 @@ export const HomePage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
-            {featuredProducts.map((p) => (
+            {displayFeatured.map((p) => (
               <ProductCard key={p._id} product={p} />
             ))}
           </div>
@@ -280,7 +438,7 @@ export const HomePage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
-            {newArrivals.map((p) => (
+            {displayNewArrivals.map((p) => (
               <ProductCard key={p._id} product={p} />
             ))}
           </div>

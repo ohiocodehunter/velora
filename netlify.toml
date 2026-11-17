@@ -8,6 +8,12 @@
   SECRETS_SCAN_ENABLED = "false"
   NODE_VERSION = "20"
 
+# Return 404 for unhandled API calls so they do not receive index.html
+[[redirects]]
+  from = "/api/*"
+  to = "/404"
+  status = 404
+
 # SPA routing redirect rule so deep links and page refreshes work properly
 [[redirects]]
   from = "/*"

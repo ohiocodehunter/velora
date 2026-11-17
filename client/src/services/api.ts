@@ -9,6 +9,13 @@ export const api = axios.create({
   },
 });
 
+api.interceptors.response.use((response) => {
+  if (typeof response.data === 'string' && response.data.trim().startsWith('<!')) {
+    return Promise.reject(new Error('Backend offline or endpoint returned HTML.'));
+  }
+  return response;
+});
+
 export function getErrorMessage(err: unknown, fallback = 'An unexpected error occurred'): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as any;
