@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '@/services/auth.service';
 import { useAppDispatch } from '@/hooks/store';
 import { setUser } from '@/store/slices/authSlice';
+import { fetchCart } from '@/store/slices/cartSlice';
+import { fetchWishlist } from '@/store/slices/wishlistSlice';
 import { addToast } from '@/store/slices/uiSlice';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import { Mail, Lock, User, Phone, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, User, Phone } from 'lucide-react';
 import { getErrorMessage } from '@/services/api';
 
 export const RegisterPage: React.FC = () => {
@@ -18,12 +20,23 @@ export const RegisterPage: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || !password) return;
+    if (!name.trim()) {
+      dispatch(addToast({ type: 'warning', message: 'Please enter your full name' }));
+      return;
+    }
+    if (!email.trim()) {
+      dispatch(addToast({ type: 'warning', message: 'Please enter your email address' }));
+      return;
+    }
+    if (!password) {
+      dispatch(addToast({ type: 'warning', message: 'Please enter a password' }));
+      return;
+    }
     if (password.length < 6) {
       dispatch(addToast({ type: 'warning', message: 'Password must be at least 6 characters' }));
       return;
@@ -33,7 +46,7 @@ export const RegisterPage: React.FC = () => {
       return;
     }
     if (!agreeTerms) {
-      dispatch(addToast({ type: 'warning', message: 'Please agree to terms of service' }));
+      dispatch(addToast({ type: 'warning', message: 'Please accept the Terms of Service to continue' }));
       return;
     }
 
@@ -46,6 +59,8 @@ export const RegisterPage: React.FC = () => {
         phone: phone.trim() || undefined,
       });
       dispatch(setUser(data.user));
+      dispatch(fetchCart());
+      dispatch(fetchWishlist());
       dispatch(addToast({ type: 'success', message: 'Account created! Welcome to VELORA.' }));
       navigate('/shop');
     } catch (err) {

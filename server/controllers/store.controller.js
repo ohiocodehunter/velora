@@ -63,11 +63,14 @@ export const applyForStore = asyncHandler(async (req, res) => {
     ...req.body,
     slug,
     owner: req.user._id,
-    status: 'pending',
+    status: 'approved',
     email: req.body.email || req.user.email,
   });
 
-  await User.updateOne({ _id: req.user._id }, { sellerStatus: 'pending' });
+  await User.updateOne(
+    { _id: req.user._id },
+    { sellerStatus: 'approved', role: 'seller', store: store._id },
+  );
 
   const admins = await User.find({ role: 'admin' }).select('_id');
   await Promise.all(

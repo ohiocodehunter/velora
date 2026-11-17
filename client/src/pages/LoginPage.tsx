@@ -8,7 +8,7 @@ import { fetchWishlist } from '@/store/slices/wishlistSlice';
 import { addToast } from '@/store/slices/uiSlice';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import { Lock, Mail, ShieldCheck, Sparkles, User, Store } from 'lucide-react';
+import { Lock, Mail } from 'lucide-react';
 import { getErrorMessage } from '@/services/api';
 
 export const LoginPage: React.FC = () => {
@@ -47,19 +47,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleQuickLogin = (role: 'buyer' | 'seller' | 'admin') => {
-    if (role === 'buyer') {
-      setEmail('ananya@example.com');
-      setPassword('Velora@123');
-    } else if (role === 'seller') {
-      setEmail('atelier.seller@velora.shop');
-      setPassword('Velora@123');
-    } else if (role === 'admin') {
-      setEmail('admin@velora.shop');
-      setPassword('Admin@12345');
-    }
-  };
-
   return (
     <div className="shell py-12 sm:py-20 flex justify-center">
       <div className="w-full max-w-md space-y-8">
@@ -71,37 +58,6 @@ export const LoginPage: React.FC = () => {
           <p className="text-xs text-muted">
             Access your orders, saved collection, and seller portals
           </p>
-        </div>
-
-        {/* Demo Fast Login Buttons */}
-        <div className="card p-4 bg-canvas/80 space-y-2 border-line">
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-accent-strong uppercase tracking-wider">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Major Project Demo Accounts</span>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('buyer')}
-              className="py-1.5 px-2 rounded-lg bg-surface border border-line text-[11px] font-medium text-ink hover:border-ink transition-colors flex items-center justify-center gap-1 cursor-pointer"
-            >
-              <User className="h-3 w-3 text-muted" /> Buyer
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('seller')}
-              className="py-1.5 px-2 rounded-lg bg-surface border border-line text-[11px] font-medium text-ink hover:border-ink transition-colors flex items-center justify-center gap-1 cursor-pointer"
-            >
-              <Store className="h-3 w-3 text-accent" /> Seller
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('admin')}
-              className="py-1.5 px-2 rounded-lg bg-surface border border-line text-[11px] font-medium text-ink hover:border-ink transition-colors flex items-center justify-center gap-1 cursor-pointer"
-            >
-              <ShieldCheck className="h-3 w-3 text-ink" /> Admin
-            </button>
-          </div>
         </div>
 
         {/* Login Form */}

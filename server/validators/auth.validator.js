@@ -2,21 +2,20 @@ import { z } from 'zod';
 
 const password = z
   .string()
-  .min(8, 'Password must be at least 8 characters')
-  .max(72, 'Password is too long')
-  .regex(/[A-Za-z]/, 'Password must include a letter')
-  .regex(/\d/, 'Password must include a number');
+  .min(6, 'Password must be at least 6 characters')
+  .max(72, 'Password is too long');
+
+const phoneField = z
+  .string()
+  .trim()
+  .optional()
+  .or(z.literal(''));
 
 export const registerSchema = z.object({
   name: z.string().trim().min(2, 'Enter your full name').max(80),
   email: z.string().trim().toLowerCase().email('Enter a valid email address'),
   password,
-  phone: z
-    .string()
-    .trim()
-    .regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number')
-    .optional()
-    .or(z.literal('')),
+  phone: phoneField,
 });
 
 export const loginSchema = z.object({
@@ -26,12 +25,7 @@ export const loginSchema = z.object({
 
 export const updateProfileSchema = z.object({
   name: z.string().trim().min(2).max(80).optional(),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number')
-    .optional()
-    .or(z.literal('')),
+  phone: phoneField,
   avatar: z
     .object({ url: z.string().url(), publicId: z.string().optional().default('') })
     .optional(),
@@ -50,6 +44,21 @@ export const resetPasswordSchema = z.object({
   password,
 });
 
+export const registerSellerSchema = z.object({
+  name: z.string().trim().min(2, 'Enter your full name').max(80).optional(),
+  email: z.string().trim().toLowerCase().email('Enter a valid email address').optional(),
+  password: password.optional(),
+  phone: phoneField,
+  storeName: z.string().trim().min(2, 'Enter your store name').max(80),
+  tagline: z.string().trim().max(140).optional().default(''),
+  description: z.string().trim().max(4000).optional().default(''),
+  city: z.string().trim().max(80).optional().default(''),
+  state: z.string().trim().max(80).optional().default(''),
+  pincode: z.string().trim().max(10).optional().default(''),
+  shippingPolicy: z.string().trim().max(500).optional().default(''),
+  returnPolicy: z.string().trim().max(500).optional().default(''),
+});
+
 export const sellerApplySchema = z.object({
   name: z.string().trim().min(2, 'Enter your store name').max(80),
   tagline: z.string().trim().max(140).optional().default(''),
@@ -66,4 +75,4 @@ export const sellerApplySchema = z.object({
     .optional(),
 });
 
-export default { registerSchema, loginSchema };
+export default { registerSchema, loginSchema, registerSellerSchema };

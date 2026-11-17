@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   register,
+  registerSeller,
   login,
   logout,
   me,
@@ -9,11 +10,12 @@ import {
   forgotPassword,
   resetPassword,
 } from '../controllers/auth.controller.js';
-import { protect } from '../middleware/auth.js';
+import { protect, optionalAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { authLimiter } from '../middleware/rateLimit.js';
 import {
   registerSchema,
+  registerSellerSchema,
   loginSchema,
   updateProfileSchema,
   changePasswordSchema,
@@ -24,6 +26,7 @@ import {
 const router = Router();
 
 router.post('/register', authLimiter, validate({ body: registerSchema }), register);
+router.post('/register-seller', optionalAuth, authLimiter, validate({ body: registerSellerSchema }), registerSeller);
 router.post('/login', authLimiter, validate({ body: loginSchema }), login);
 router.post('/logout', logout);
 router.get('/me', protect, me);

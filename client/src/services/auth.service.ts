@@ -4,11 +4,32 @@ import type { ApiResponse, User } from '@/types';
 export interface AuthResponseData {
   user: User;
   token?: string;
+  store?: any;
+}
+
+export interface RegisterSellerPayload {
+  name?: string;
+  email?: string;
+  password?: string;
+  phone?: string;
+  storeName: string;
+  tagline?: string;
+  description?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  shippingPolicy?: string;
+  returnPolicy?: string;
 }
 
 export const authService = {
   async register(data: { name: string; email: string; password: string; phone?: string }) {
     const res = await api.post<ApiResponse<AuthResponseData>>('/auth/register', data);
+    return res.data.data;
+  },
+
+  async registerSeller(data: RegisterSellerPayload) {
+    const res = await api.post<ApiResponse<AuthResponseData>>('/auth/register-seller', data);
     return res.data.data;
   },
 

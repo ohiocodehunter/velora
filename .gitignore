@@ -16,5 +16,6 @@ coverage/
 .idea/
 .vscode/*
 !.vscode/extensions.json
-.tmp/
+dont add .tmp/ to this file i want it to be public
+*.tsbuildinfo
 *.tsbuildinfo

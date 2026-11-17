@@ -1,9 +1,12 @@
 import crypto from 'node:crypto';
 import User from '../models/User.js';
+import Store from '../models/Store.js';
 import ApiError from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { signToken, setAuthCookie, clearAuthCookie } from '../utils/token.js';
 import { ok, created, message } from '../utils/response.js';
+import { uniqueSlug } from '../utils/slug.js';
+import { notify } from '../services/notification.service.js';
 import { sendPasswordResetEmail, sendWelcomeEmail } from '../services/email.service.js';
 
 export const register = asyncHandler(async (req, res) => {
@@ -17,6 +20,111 @@ export const register = asyncHandler(async (req, res) => {
 
   sendWelcomeEmail(user).catch(() => {});
   return created(res, { user, token });
+});
+
+export const registerSeller = asyncHandler(async (req, res) => {
+  const {
+    name,
+    email,
+    password,
+    phone = '',
+    storeName,
+    tagline = '',
+    description = '',
+    city = '',
+    state = '',
+    pincode = '',
+    shippingPolicy = '',
+    returnPolicy = '',
+  } = req.body;
+
+  let user = null;
+
+  // If user is already authenticated (session cookie present)
+  if (req.user) {
+    user = await User.findById(req.user._id);
+  } else if (email) {
+    // Check if an existing account has this email
+    user = await User.findOne({ email }).select('+password');
+    if (user && password) {
+      const matches = await user.comparePassword(password);
+      if (!matches) {
+        throw ApiError.conflict('An account with this email already exists. Please enter your correct password or sign in first.');
+      }
+    }
+  }
+
+  // If new user, create their account
+  if (!user) {
+    if (!name || !email || !password) {
+      throw ApiError.badRequest('Name, email, and password are required to register');
+    }
+    user = await User.create({
+      name,
+      email,
+      password,
+      phone,
+      role: 'seller',
+      sellerStatus: 'approved',
+    });
+  }
+
+  // Check if store already exists for this user
+  let store = await Store.findOne({ owner: user._id });
+  if (store) {
+    store.status = 'approved';
+    if (storeName && storeName !== store.name) {
+      store.name = storeName;
+      store.slug = await uniqueSlug(Store, storeName, store._id);
+    }
+    if (tagline) store.tagline = tagline;
+    if (description) store.description = description;
+    await store.save();
+  } else {
+    const slug = await uniqueSlug(Store, storeName || `${user.name} Atelier`);
+    store = await Store.create({
+      name: storeName || `${user.name} Atelier`,
+      slug,
+      owner: user._id,
+      tagline,
+      description,
+      email: email || user.email,
+      phone: phone || user.phone,
+      status: 'approved',
+      address: {
+        city: city || 'Mumbai',
+        state: state || 'Maharashtra',
+        pincode: pincode || '400001',
+        country: 'India',
+      },
+      policies: {
+        shipping: shippingPolicy || 'Dispatches within 24-48 business hours with tracked insured courier.',
+        returns: returnPolicy || 'Complimentary 7-day hassle-free doorstep returns.',
+      },
+    });
+  }
+
+  user.role = 'seller';
+  user.sellerStatus = 'approved';
+  user.store = store._id;
+  await user.save({ validateBeforeSave: false });
+
+  const token = signToken(user);
+  setAuthCookie(res, token);
+
+  const admins = await User.find({ role: 'admin' }).select('_id');
+  await Promise.all(
+    admins.map((admin) =>
+      notify(admin._id, {
+        type: 'seller',
+        title: 'New seller registered',
+        message: `${user.name} registered store "${store.name}".`,
+        link: '/admin/sellers',
+      }).catch(() => {}),
+    ),
+  );
+
+  return created(res, { user, store, token });
 });
 
 export const login = asyncHandler(async (req, res) => {
@@ -97,4 +205,4 @@ export const resetPassword = asyncHandler(async (req, res) => {
   return message(res, 'Password reset. You can sign in with your new password.');
 });
 
-export default { register, login, logout, me, updateProfile, changePassword, forgotPassword, resetPassword };
+export default { register, registerSeller, login, logout, me, updateProfile, changePassword, forgotPassword, resetPassword };

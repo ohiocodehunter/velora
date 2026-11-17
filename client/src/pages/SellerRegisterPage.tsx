@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/hooks/store';
-import { sellerService } from '@/services/seller.service';
-import { fetchCurrentUser } from '@/store/slices/authSlice';
+import { authService } from '@/services/auth.service';
+import { setUser } from '@/store/slices/authSlice';
+import { fetchCart } from '@/store/slices/cartSlice';
+import { fetchWishlist } from '@/store/slices/wishlistSlice';
 import { addToast } from '@/store/slices/uiSlice';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/Button';
 import Breadcrumbs from '@/components/common/Breadcrumbs';
-import { Store, ShieldCheck, Award, Truck, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Store, ShieldCheck, Award, CheckCircle2, ArrowRight, User, Mail, Lock, Phone } from 'lucide-react';
 import { INDIAN_STATES } from '@/utils/constants';
 import { getErrorMessage } from '@/services/api';
 
@@ -17,61 +19,106 @@ export const SellerRegisterPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
+  // Account details (for new sellers who aren't signed in yet)
+  const [name, setName] = useState(user?.name || '');
+  const [accountEmail, setAccountEmail] = useState(user?.email || '');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [accountPhone, setAccountPhone] = useState(user?.phone || '');
+
+  // Store identity details
   const [storeName, setStoreName] = useState('');
   const [tagline, setTagline] = useState('');
   const [description, setDescription] = useState('');
-  const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phone || '');
+  const [contactEmail, setContactEmail] = useState(user?.email || '');
+  const [contactPhone, setContactPhone] = useState(user?.phone || '');
   const [city, setCity] = useState('');
   const [state, setState] = useState('Maharashtra');
   const [pincode, setPincode] = useState('');
-  const [shippingPolicy, setShippingPolicy] = useState('Dispatches within 24-48 business hours with tracked insured courier.');
+  const [shippingPolicy, setShippingPolicy] = useState(
+    'Dispatches within 24-48 business hours with tracked insured courier.',
+  );
   const [returnPolicy, setReturnPolicy] = useState('Complimentary 7-day hassle-free doorstep returns.');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate account info if not logged in
     if (!isAuthenticated) {
-      dispatch(addToast({ type: 'info', message: 'Please sign in or create an account before applying' }));
-      navigate('/login?redirect=/seller/register');
-      return;
+      if (!name.trim()) {
+        dispatch(addToast({ type: 'warning', message: 'Please enter your full name' }));
+        return;
+      }
+      if (!accountEmail.trim()) {
+        dispatch(addToast({ type: 'warning', message: 'Please enter your account email' }));
+        return;
+      }
+      if (!password) {
+        dispatch(addToast({ type: 'warning', message: 'Please create a password for your seller account' }));
+        return;
+      }
+      if (password.length < 6) {
+        dispatch(addToast({ type: 'warning', message: 'Password must be at least 6 characters' }));
+        return;
+      }
+      if (password !== confirmPassword) {
+        dispatch(addToast({ type: 'warning', message: 'Passwords do not match' }));
+        return;
+      }
     }
 
-    if (!storeName.trim() || !city.trim() || !pincode.trim()) {
-      dispatch(addToast({ type: 'warning', message: 'Please complete all required store fields' }));
+    // Validate store details
+    if (!storeName.trim()) {
+      dispatch(addToast({ type: 'warning', message: 'Please enter your store or brand name' }));
+      return;
+    }
+    if (!city.trim()) {
+      dispatch(addToast({ type: 'warning', message: 'Please enter your dispatch hub city' }));
+      return;
+    }
+    if (!pincode.trim()) {
+      dispatch(addToast({ type: 'warning', message: 'Please enter your dispatch pincode' }));
       return;
     }
 
     try {
       setIsSubmitting(true);
-      await sellerService.applyForStore({
-        name: storeName.trim(),
+      const data = await authService.registerSeller({
+        name: !isAuthenticated ? name.trim() : undefined,
+        email: !isAuthenticated ? accountEmail.trim() : undefined,
+        password: !isAuthenticated ? password : undefined,
+        phone: (!isAuthenticated ? accountPhone.trim() : contactPhone.trim()) || undefined,
+        storeName: storeName.trim(),
         tagline: tagline.trim() || undefined,
         description: description.trim() || undefined,
-        email: email.trim() || undefined,
-        phone: phone.trim() || undefined,
-        address: {
-          city: city.trim(),
-          state,
-          pincode: pincode.trim(),
-          country: 'India',
-        },
-        policies: {
-          shipping: shippingPolicy.trim() || undefined,
-          returns: returnPolicy.trim() || undefined,
-        },
+        city: city.trim(),
+        state,
+        pincode: pincode.trim(),
+        shippingPolicy: shippingPolicy.trim() || undefined,
+        returnPolicy: returnPolicy.trim() || undefined,
       });
 
-      await dispatch(fetchCurrentUser());
+      if (data?.user) {
+        dispatch(setUser(data.user));
+        dispatch(fetchCart());
+        dispatch(fetchWishlist());
+      }
+
       dispatch(
         addToast({
           type: 'success',
-          message: 'Seller application submitted! Our team will review your store credentials.',
+          message: `Welcome to VELORA Sellers! Your store "${storeName.trim()}" is now active.`,
         }),
       );
       navigate('/seller/dashboard');
     } catch (err) {
-      dispatch(addToast({ type: 'error', message: getErrorMessage(err, 'Failed to submit seller application') }));
+      dispatch(
+        addToast({
+          type: 'error',
+          message: getErrorMessage(err, 'Failed to complete seller registration'),
+        }),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -100,17 +147,98 @@ export const SellerRegisterPage: React.FC = () => {
         <div className="lg:col-span-8">
           <div className="card p-6 sm:p-10 space-y-8">
             <div>
-              <h2 className="text-xl font-normal text-ink">Store Application Form</h2>
+              <h2 className="text-xl font-normal text-ink">Store Registration</h2>
               <p className="text-xs text-muted mt-1">
-                Provide accurate business information for swift approval by our moderation team.
+                Complete your seller registration to instantly launch your storefront and access the Seller Portal.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Section 1: Store Brand */}
-              <div className="space-y-4">
+              {/* Account Details */}
+              {isAuthenticated && user ? (
+                <div className="p-4 rounded-2xl bg-canvas border border-line flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-surface border border-line flex items-center justify-center text-accent">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-ink">{user.name}</p>
+                      <p className="text-[11px] text-muted">{user.email}</p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-medium text-success flex items-center gap-1">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Authenticated
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-line pb-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-ink">
+                      1. Seller Account Details
+                    </h3>
+                    <span className="text-xs text-muted">
+                      Already registered?{' '}
+                      <Link to="/login?redirect=/seller/register" className="text-accent hover:underline font-medium">
+                        Sign In
+                      </Link>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Full Name"
+                      required
+                      icon={<User className="h-4 w-4" />}
+                      placeholder="e.g. Aarav Mehta"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                    <Input
+                      label="Account Email"
+                      type="email"
+                      required
+                      icon={<Mail className="h-4 w-4" />}
+                      placeholder="you@domain.com"
+                      value={accountEmail}
+                      onChange={(e) => setAccountEmail(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Password"
+                      type="password"
+                      required
+                      icon={<Lock className="h-4 w-4" />}
+                      placeholder="At least 6 characters"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <Input
+                      label="Confirm Password"
+                      type="password"
+                      required
+                      icon={<Lock className="h-4 w-4" />}
+                      placeholder="Re-enter password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <Input
+                    label="Mobile Phone"
+                    icon={<Phone className="h-4 w-4" />}
+                    placeholder="10-digit mobile number"
+                    value={accountPhone}
+                    onChange={(e) => setAccountPhone(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {/* Section 2: Store Identity */}
+              <div className="space-y-4 pt-4 border-t border-line">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-ink border-b border-line pb-2">
-                  1. Brand & Store Identity
+                  {isAuthenticated ? '1. Store & Brand Identity' : '2. Store & Brand Identity'}
                 </h3>
                 <Input
                   label="Store / Brand Name"
@@ -134,30 +262,16 @@ export const SellerRegisterPage: React.FC = () => {
                 />
               </div>
 
-              {/* Section 2: Contact & Base */}
+              {/* Section 3: Contact & Dispatch Hub */}
               <div className="space-y-4 pt-4 border-t border-line">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-ink border-b border-line pb-2">
-                  2. Business Contact & Dispatch Hub
+                  {isAuthenticated ? '2. Dispatch Hub Location' : '3. Dispatch Hub Location'}
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label="Official Business Email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <Input
-                    label="Business Phone"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Input
                     label="Hub City"
                     required
+                    placeholder="e.g. Mumbai, Jaipur, Bengaluru"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                   />
@@ -179,16 +293,17 @@ export const SellerRegisterPage: React.FC = () => {
                     label="Dispatch Pincode"
                     required
                     maxLength={6}
+                    placeholder="6-digit pincode"
                     value={pincode}
                     onChange={(e) => setPincode(e.target.value)}
                   />
                 </div>
               </div>
 
-              {/* Section 3: Policies */}
+              {/* Section 4: Policies */}
               <div className="space-y-4 pt-4 border-t border-line">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-ink border-b border-line pb-2">
-                  3. Customer Assurances
+                  {isAuthenticated ? '3. Customer Assurances' : '4. Customer Assurances'}
                 </h3>
                 <Input
                   label="Shipping Standard"
@@ -204,10 +319,10 @@ export const SellerRegisterPage: React.FC = () => {
 
               <div className="pt-4">
                 <Button type="submit" variant="primary" size="lg" className="w-full" isLoading={isSubmitting}>
-                  Submit Application for Review <ArrowRight className="h-4 w-4 ml-1.5" />
+                  Register Store & Open Seller Portal <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
                 <p className="text-[11px] text-muted text-center mt-2.5">
-                  Applications are typically verified by our admin team within 24 hours.
+                  By registering, you agree to VELORA's Seller Code of Conduct, Authenticity Guarantee, and Escrow Terms.
                 </p>
               </div>
             </form>
