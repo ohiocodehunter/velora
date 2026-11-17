@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAppDispatch } from '@/hooks/store';
+import { useAppDispatch, useAppSelector } from '@/hooks/store';
 import { fetchCurrentUser } from '@/store/slices/authSlice';
 import { fetchCart } from '@/store/slices/cartSlice';
 import { fetchWishlist } from '@/store/slices/wishlistSlice';
@@ -59,12 +59,18 @@ import AdminMessagesPage from '@/pages/admin/AdminMessagesPage';
 
 export const App: React.FC = () => {
   const dispatch = useAppDispatch();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(fetchCurrentUser());
-    dispatch(fetchCart());
-    dispatch(fetchWishlist());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchCart());
+      dispatch(fetchWishlist());
+    }
+  }, [dispatch, isAuthenticated]);
 
   return (
     <BrowserRouter>

@@ -12,8 +12,8 @@ server/uploads/*
 server/.data/
 coverage/
 .vite/
-.tmp/
 .freebuff/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+.tmp/
