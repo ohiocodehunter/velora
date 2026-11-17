@@ -1,0 +1,15 @@
+# Netlify Configuration for VELORA Frontend
+
+[build]
+  command = "npm --workspace @velora/client run build"
+  publish = "client/dist"
+
+[build.environment]
+  SECRETS_SCAN_ENABLED = "false"
+  NODE_VERSION = "20"
+
+# SPA routing redirect rule so deep links and page refreshes work properly
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
