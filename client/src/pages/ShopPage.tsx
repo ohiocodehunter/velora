@@ -98,8 +98,17 @@ export const ShopPage: React.FC = () => {
     } else {
       next.set(key, val);
     }
-    next.set('page', '1'); // reset page
+    if (key !== 'page') {
+      next.set('page', '1'); // reset page only when filters change
+    }
     setSearchParams(next);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('page', String(newPage));
+    setSearchParams(next);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const clearAllFilters = () => {
@@ -372,7 +381,7 @@ export const ShopPage: React.FC = () => {
                 <Pagination
                   currentPage={meta.page}
                   totalPages={meta.pages}
-                  onPageChange={(p) => updateFilter('page', String(p))}
+                  onPageChange={handlePageChange}
                   className="mt-10"
                 />
               )}

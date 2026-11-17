@@ -16,20 +16,23 @@ export const Pagination: React.FC<PaginationProps> = ({
   onPageChange,
   className,
 }) => {
-  if (totalPages <= 1) return null;
+  const current = Math.max(1, Number(currentPage) || 1);
+  const total = Math.max(1, Number(totalPages) || 1);
+
+  if (total <= 1) return null;
 
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
     } else {
       pages.push(1);
-      if (currentPage > 3) pages.push('...');
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
+      if (current > 3) pages.push('...');
+      const start = Math.max(2, current - 1);
+      const end = Math.min(total - 1, current + 1);
       for (let i = start; i <= end; i++) pages.push(i);
-      if (currentPage < totalPages - 2) pages.push('...');
-      pages.push(totalPages);
+      if (current < total - 2) pages.push('...');
+      pages.push(total);
     }
     return pages;
   };
@@ -39,9 +42,11 @@ export const Pagination: React.FC<PaginationProps> = ({
       <Button
         variant="outline"
         size="sm"
-        disabled={currentPage <= 1}
-        onClick={() => onPageChange(currentPage - 1)}
+        type="button"
+        disabled={current <= 1}
+        onClick={() => onPageChange(current - 1)}
         className="h-9 px-2.5"
+        aria-label="Previous page"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -54,13 +59,15 @@ export const Pagination: React.FC<PaginationProps> = ({
           ) : (
             <button
               key={idx}
+              type="button"
               onClick={() => onPageChange(p)}
               className={cn(
                 'h-9 min-w-9 px-2 rounded-lg text-xs font-medium transition-colors cursor-pointer',
-                p === currentPage
-                  ? 'bg-ink text-surface'
+                p === current
+                  ? 'bg-ink text-surface font-semibold shadow-xs'
                   : 'text-ink hover:bg-line/40 border border-transparent',
               )}
+              aria-current={p === current ? 'page' : undefined}
             >
               {p}
             </button>
@@ -70,9 +77,11 @@ export const Pagination: React.FC<PaginationProps> = ({
       <Button
         variant="outline"
         size="sm"
-        disabled={currentPage >= totalPages}
-        onClick={() => onPageChange(currentPage + 1)}
+        type="button"
+        disabled={current >= total}
+        onClick={() => onPageChange(current + 1)}
         className="h-9 px-2.5"
+        aria-label="Next page"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

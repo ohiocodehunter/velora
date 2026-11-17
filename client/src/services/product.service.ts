@@ -28,14 +28,16 @@ export const productService = {
       });
       const data = res.data;
       const products = Array.isArray(data?.data) ? data.data : [];
-      if (products.length > 0) {
-        const meta = data?.meta ?? {
+      if (products.length > 0 || (data?.meta && data.meta.total > 0)) {
+        const requestedPage = Number(params.page) || 1;
+        const requestedLimit = Number(params.limit) || 12;
+        const meta: PaginationMeta = data?.meta ?? {
           total: products.length,
-          page: 1,
-          limit: 12,
-          pages: 1,
-          hasNext: false,
-          hasPrev: false,
+          page: requestedPage,
+          limit: requestedLimit,
+          pages: Math.max(1, Math.ceil(products.length / requestedLimit)),
+          hasNext: requestedPage < Math.ceil(products.length / requestedLimit),
+          hasPrev: requestedPage > 1,
         };
         return { products, meta };
       }

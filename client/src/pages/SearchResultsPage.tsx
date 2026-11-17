@@ -57,6 +57,7 @@ export const SearchResultsPage: React.FC = () => {
     const next = new URLSearchParams(searchParams);
     next.set('page', String(newPage));
     setSearchParams(next);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
