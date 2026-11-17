@@ -11,20 +11,24 @@ export interface ReviewPayload {
 
 export const reviewService = {
   async getProductReviews(productId: string, params: { page?: number; limit?: number } = {}) {
-    const res = await api.get<any>(
-      `/reviews/product/${productId}`,
-      { params },
-    );
-    const data = res.data?.data;
-    const reviewsList = Array.isArray(data?.reviews)
-      ? data.reviews
-      : Array.isArray(data)
-        ? data
-        : [];
-    return {
-      reviews: reviewsList as Review[],
-      meta: res.data?.meta ?? { total: reviewsList.length, page: 1, limit: 10, pages: 1, hasNext: false, hasPrev: false },
-    };
+    try {
+      const res = await api.get<any>(`/reviews/product/${productId}`, { params });
+      const data = res.data?.data;
+      const reviewsList = Array.isArray(data?.reviews)
+        ? data.reviews
+        : Array.isArray(data)
+          ? data
+          : [];
+      return {
+        reviews: reviewsList as Review[],
+        meta: res.data?.meta ?? { total: reviewsList.length, page: 1, limit: 10, pages: 1, hasNext: false, hasPrev: false },
+      };
+    } catch {
+      return {
+        reviews: [],
+        meta: { total: 0, page: 1, limit: 10, pages: 1, hasNext: false, hasPrev: false },
+      };
+    }
   },
 
   async getMyReviews() {

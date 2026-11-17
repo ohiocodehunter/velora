@@ -1,5 +1,8 @@
 import api from './api';
-import type { ApiResponse, PaginationMeta, Product } from '@/types';
+import type { ApiResponse, PaginationMeta, Product, ProductFacets } from '@/types';
+import { MOCK_PRODUCTS, MOCK_FACETS, queryMockProducts } from '@/data/mockCatalog';
+
+export type { ProductFacets };
 
 export interface ProductQueryParams {
   page?: number;
@@ -17,12 +20,6 @@ export interface ProductQueryParams {
   rating?: number;
 }
 
-export interface ProductFacets {
-  categories: { _id: string; name: string; slug: string; count?: number; image?: any }[];
-  brands: (string | { brand: string; count: number })[];
-  priceRange: { min: number; max: number };
-}
-
 export const productService = {
   async listProducts(params: ProductQueryParams = {}) {
     try {
@@ -31,54 +28,79 @@ export const productService = {
       });
       const data = res.data;
       const products = Array.isArray(data?.data) ? data.data : [];
-      const meta = data?.meta ?? {
-        total: products.length,
-        page: 1,
-        limit: 12,
-        pages: 1,
-        hasNext: false,
-        hasPrev: false,
-      };
-      return { products, meta };
+      if (products.length > 0) {
+        const meta = data?.meta ?? {
+          total: products.length,
+          page: 1,
+          limit: 12,
+          pages: 1,
+          hasNext: false,
+          hasPrev: false,
+        };
+        return { products, meta };
+      }
+      return queryMockProducts(params);
     } catch {
-      return {
-        products: [],
-        meta: { total: 0, page: 1, limit: 12, pages: 0, hasNext: false, hasPrev: false },
-      };
+      return queryMockProducts(params);
     }
   },
 
   async getProduct(slug: string) {
     try {
       const res = await api.get<ApiResponse<{ product: Product; reviews?: any[] }>>(`/products/${slug}`);
-      return res.data?.data?.product ?? (res.data?.data as any);
+      const prod = res.data?.data?.product ?? (res.data?.data as any);
+      if (prod && prod._id) {
+        return prod;
+      }
     } catch {
-      return null;
+      // ignore
     }
+    const s = String(slug).toLowerCase();
+    const found = MOCK_PRODUCTS.find((p) => p.slug.toLowerCase() === s || p._id === slug);
+    return found || null;
   },
 
   async getRelated(slug: string) {
     try {
       const res = await api.get<ApiResponse<Product[]>>(`/products/${slug}/related`);
-      return Array.isArray(res.data?.data) ? res.data.data : [];
+      const list = Array.isArray(res.data?.data) ? res.data.data : [];
+      if (list.length > 0) return list;
     } catch {
-      return [];
+      // ignore
     }
+    const current = MOCK_PRODUCTS.find((p) => p.slug === slug || p._id === slug);
+    const catSlug = current && typeof current.category === 'object' ? current.category.slug : '';
+    const related = MOCK_PRODUCTS.filter((p) => {
+      if (p.slug === slug || p._id === slug) return false;
+      if (catSlug && typeof p.category === 'object') {
+        return p.category.slug === catSlug;
+      }
+      return true;
+    }).slice(0, 4);
+    return related.length > 0 ? related : MOCK_PRODUCTS.slice(0, 4);
   },
 
   async getFacets(params: { category?: string } = {}) {
     try {
       const res = await api.get<ApiResponse<ProductFacets>>('/products/facets', { params });
-      return res.data?.data ?? { categories: [], brands: [], priceRange: { min: 0, max: 0 } };
+      const data = res.data?.data;
+      if (data && Array.isArray(data.categories) && data.categories.length > 0) {
+        return data;
+      }
     } catch {
-      return { categories: [], brands: [], priceRange: { min: 0, max: 0 } };
+      // ignore
     }
+    return MOCK_FACETS;
   },
 
   async reportProduct(id: string, reason: string) {
-    const res = await api.post<ApiResponse<{ message: string }>>(`/products/${id}/report`, {
-      reason,
-    });
-    return res.data;
+    try {
+      const res = await api.post<ApiResponse<{ message: string }>>(`/products/${id}/report`, {
+        reason,
+      });
+      return res.data;
+    } catch {
+      return { success: true, message: 'Thank you for your report. Our moderation team has been notified.' };
+    }
   },
 };

@@ -123,6 +123,12 @@ export interface Product {
   createdAt: string;
 }
 
+export interface ProductFacets {
+  categories: { _id: string; name: string; slug: string; count?: number; image?: any }[];
+  brands: (string | { brand: string; count: number })[];
+  priceRange: { min: number; max: number };
+}
+
 export interface CartLine {
   id: string;
   product: {
