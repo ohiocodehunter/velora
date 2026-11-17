@@ -18,8 +18,8 @@ export interface ProductQueryParams {
 }
 
 export interface ProductFacets {
-  categories: { _id: string; name: string; slug: string; count: number }[];
-  brands: { brand: string; count: number }[];
+  categories: { _id: string; name: string; slug: string; count?: number; image?: any }[];
+  brands: (string | { brand: string; count: number })[];
   priceRange: { min: number; max: number };
 }
 
@@ -29,19 +29,19 @@ export const productService = {
       params,
     });
     return {
-      products: res.data.data,
+      products: Array.isArray(res.data.data) ? res.data.data : [],
       meta: res.data.meta!,
     };
   },
 
   async getProduct(slug: string) {
-    const res = await api.get<ApiResponse<{ product: Product }>>(`/products/${slug}`);
-    return res.data.data.product;
+    const res = await api.get<ApiResponse<{ product: Product; reviews?: any[] }>>(`/products/${slug}`);
+    return res.data.data?.product ?? (res.data.data as any);
   },
 
   async getRelated(slug: string) {
-    const res = await api.get<ApiResponse<{ products: Product[] }>>(`/products/${slug}/related`);
-    return res.data.data.products;
+    const res = await api.get<ApiResponse<Product[]>>(`/products/${slug}/related`);
+    return Array.isArray(res.data.data) ? res.data.data : [];
   },
 
   async getFacets(params: { category?: string } = {}) {

@@ -268,24 +268,31 @@ export const ShopPage: React.FC = () => {
                   Brands
                 </h4>
                 <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                  {facets.brands.map((b) => (
-                    <label
-                      key={b.brand}
-                      className="flex items-center justify-between text-xs text-muted hover:text-ink cursor-pointer"
-                    >
-                      <span className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="brand"
-                          checked={brandParam.toLowerCase() === b.brand.toLowerCase()}
-                          onChange={() => updateFilter('brand', b.brand)}
-                          className="accent-accent"
-                        />
-                        <span>{b.brand}</span>
-                      </span>
-                      <span className="text-[11px] text-muted/60">{b.count}</span>
-                    </label>
-                  ))}
+                  {facets.brands.map((b) => {
+                    const brandName = typeof b === 'string' ? b : b.brand;
+                    const brandCount = typeof b === 'object' && b !== null && 'count' in b ? (b as any).count : null;
+                    const isChecked = brandParam.toLowerCase() === (brandName || '').toLowerCase();
+                    return (
+                      <label
+                        key={brandName}
+                        className="flex items-center justify-between text-xs text-muted hover:text-ink cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="brand"
+                            checked={isChecked}
+                            onChange={() => updateFilter('brand', brandName)}
+                            className="accent-accent"
+                          />
+                          <span>{brandName}</span>
+                        </span>
+                        {brandCount !== null && (
+                          <span className="text-[11px] text-muted/60">{brandCount}</span>
+                        )}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -66,10 +66,14 @@ export const ProductDetailsPage: React.FC = () => {
         setSelectedImage(0);
         setQuantity(1);
         const prod = await productService.getProduct(slug);
+        if (!prod) {
+          setProduct(null);
+          return;
+        }
         setProduct(prod);
 
         // Preselect first variant option if available
-        if (prod.variants && prod.variants.length > 0 && prod.variants[0]?.options.length > 0) {
+        if (prod.variants && prod.variants.length > 0 && prod.variants[0]?.options?.length > 0) {
           const firstOpt = prod.variants[0].options[0];
           setSelectedVariant(`${prod.variants[0].name}: ${firstOpt.label}`);
         } else {
@@ -82,8 +86,17 @@ export const ProductDetailsPage: React.FC = () => {
           reviewService.getProductReviews(prod._id, { limit: 10 }),
         ]);
 
-        if (relatedRes.status === 'fulfilled') setRelated(relatedRes.value);
-        if (reviewsRes.status === 'fulfilled') setReviews(reviewsRes.value.reviews);
+        if (relatedRes.status === 'fulfilled' && Array.isArray(relatedRes.value)) {
+          setRelated(relatedRes.value);
+        } else {
+          setRelated([]);
+        }
+
+        if (reviewsRes.status === 'fulfilled' && Array.isArray(reviewsRes.value?.reviews)) {
+          setReviews(reviewsRes.value.reviews);
+        } else {
+          setReviews([]);
+        }
       } catch {
         setProduct(null);
       } finally {
@@ -429,7 +442,7 @@ export const ProductDetailsPage: React.FC = () => {
                 </div>
               </div>
               <Link
-                to={`/shop?seller=${product.seller}`}
+                to={store.slug ? `/shop?store=${store.slug}` : `/shop`}
                 className="text-xs font-medium text-accent hover:underline"
               >
                 Visit Store →
@@ -477,7 +490,7 @@ export const ProductDetailsPage: React.FC = () => {
           </div>
 
           {/* Specifications Table */}
-          {product.specifications && Object.keys(product.specifications).length > 0 && (
+          {product.specifications && typeof product.specifications === 'object' && Object.keys(product.specifications).length > 0 && (
             <div className="lg:col-span-5 space-y-4">
               <h2 className="text-xl font-normal text-ink">Specifications</h2>
               <div className="card divide-y divide-line overflow-hidden">
@@ -518,7 +531,7 @@ export const ProductDetailsPage: React.FC = () => {
           </Button>
         </div>
 
-        {reviews.length === 0 ? (
+        {(!Array.isArray(reviews) || reviews.length === 0) ? (
           <div className="p-8 rounded-2xl bg-surface border border-line text-center text-xs text-muted">
             There are no reviews for this product yet. Be the first to share your experience!
           </div>
@@ -549,7 +562,7 @@ export const ProductDetailsPage: React.FC = () => {
       </section>
 
       {/* Related Products Carousel/Grid */}
-      {related.length > 0 && (
+      {Array.isArray(related) && related.length > 0 && (
         <section className="border-t border-line pt-12">
           <div className="mb-8">
             <span className="eyebrow">Complementary Pieces</span>
